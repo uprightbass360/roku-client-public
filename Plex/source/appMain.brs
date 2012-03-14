@@ -11,6 +11,8 @@ Sub Main()
     'initialize theme attributes like titles, logos and overhang color
     initTheme()
 
+    showUpgradeMessage()
+
     'prepare the screen for display and get ready to begin
     controller = createViewController()
     controller.ShowHomeScreen()
@@ -116,5 +118,52 @@ Sub initTheme()
 
     app.SetTheme(theme)
 
+End Sub
+
+Sub showUpgradeMessage()
+    device = CreateObject("roDeviceInfo")
+    version = device.GetVersion()
+    major = Mid(version, 3, 1)
+    minor = Mid(version, 5, 2)
+
+    ' This shouldn't really exist in the wild...
+    if major.toint() <= 3 AND minor.toint() < 1 then
+        print "Can't upgrade, firmware 3.1 required"
+        return
+    end if
+
+    port = CreateObject("roMessagePort")
+    screen = CreateObject("roParagraphScreen")
+    screen.SetMessagePort(port)
+    screen.AddHeaderText("Plex for Roku in the Channel Store!")
+    screen.AddParagraph("We're very excited to announce that Plex for Roku is now out of beta and available in the Channel Store (still free).")
+    screen.AddParagraph("Thank you so much for helping us test this beta. We're always working on new things, and we'll let you know when we have another beta to play with. In the meantime, we'd prefer that you use the official channel, as that's where updates will be made.")
+    screen.AddParagraph("Do you want to install the official channel now?")
+    screen.AddButton(1, "Yes, please!")
+    screen.AddButton(2, "No thanks")
+    screen.Show()
+
+    while true
+        msg = wait(0, port)
+        if type(msg) = "roParagraphScreenEvent"
+            if msg.isScreenClosed() then
+                exit while
+            else if msg.isButtonPressed() then
+                if msg.GetIndex() = 1 then
+                    ' Really, no localhost support?
+                    addrs = device.GetIPAddrs()
+                    addrs.Reset()
+                    if addrs.IsNext() then
+                        addr = addrs[addrs.Next()]
+                        ' TODO(schuyler): Use a real contentID once we have one.
+                        http = NewHttp("http://" + addr + ":8060/launch/11?contentID=14")
+                        http.PostFromStringWithTimeout("", 60)
+                    end if
+                else
+                    screen.Close()
+                end if
+            end if
+        end if
+    end while
 End Sub
 
