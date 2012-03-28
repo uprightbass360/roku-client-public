@@ -87,8 +87,7 @@ Sub showUpgradeMessage()
                     addrs.Reset()
                     if addrs.IsNext() then
                         addr = addrs[addrs.Next()]
-                        ' TODO(schuyler): Use a real contentID once we have one.
-                        http = NewHttp("http://" + addr + ":8060/launch/11?contentID=14")
+                        http = NewHttp("http://" + addr + ":8060/launch/11?contentID=13535")
                         http.PostFromStringWithTimeout("", 60)
                     end if
                 else
